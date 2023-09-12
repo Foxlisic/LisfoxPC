@@ -1,0 +1,7 @@
+*.exe
+*.o
+*.img
+*.map
+*.elf
+*.bin
+*.lst
