@@ -8,11 +8,7 @@ Kernel core;
 int main() {
 
     core.reset();
+    core.bashin();
 
-    // core.input();
-
-    for (;;) { ds.prn(kb.getch()); }
-
-    // ei(3);
     for(;;);
 }

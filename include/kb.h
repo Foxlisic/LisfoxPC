@@ -2,6 +2,17 @@
 // Объявить о наличии KbATnT
 extern const byte KbATnT[] PROGMEM;
 
+enum VKey {
+
+    VK_UP       = 1,
+    VK_RT       = 2,
+    VK_DN       = 3,
+    VK_LF       = 4,
+    VK_ENT      = 10,
+    VK_HOME     = 5,
+    VK_END      = 6,
+};
+
 /*
  * 1  ^  TOP
  * 2  -> RIGHT
@@ -84,6 +95,7 @@ public:
                 if (spec) {
 
                     if      (in == 0x1F || in == 0x27) ot = 31; // GUI
+                    else if (in == 0x5A) ot = 10; // Ent
                     else if (in == 0x2F) ot = 28; // Win
                     else if (in == 0x70) ot = 26; // Ins
                     else if (in == 0x6C) ot = 5;  // Home
