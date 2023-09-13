@@ -1,10 +1,18 @@
 #include <avrio.h>
 
-ISR(INT0_vect) { eoi; } // 1 VSYNC
-ISR(INT1_vect) { eoi; } // 2 KEYBOARD :: Keyboard KB; KB.recv();
+#include "filesys.h"
+#include "kernel.h"
+
+Kernel core;
 
 int main() {
 
-    ei(3);
+    core.reset();
+
+    // core.input();
+
+    for (;;) { ds.prn(kb.getch()); }
+
+    // ei(3);
     for(;;);
 }

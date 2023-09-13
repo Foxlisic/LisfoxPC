@@ -2,6 +2,7 @@
 #define __DISPLAY3_HFILE
 
 #include "avrio.h"
+#include "string.h"
 
 class Display3 {
 public:
@@ -39,12 +40,12 @@ public:
     }
 
     // Пропечать одного символа
-    void prn(char m) {
+    void prn(char m, byte ignore = 0) {
 
         heapvm;
         bank(0);
 
-        if (m == 10) {
+        if (m == 10 && ignore == 0) {
             locx = 80;
         } else {
             int loc = 2*locx + locy*160;
@@ -64,6 +65,7 @@ public:
         locate(locx, locy);
     }
 
+    // Отложить байт на экране
     void put(byte x, byte y, byte ch) {
 
         heapvm;
@@ -73,41 +75,38 @@ public:
     }
 
     // Печать символов на экране
-    int print(const char* m) {
+    int print(const char* m, byte pgm = 0) {
 
-        int i = 0;
-        while (m[i]) prn(m[i++]);
-        return i;
-    }
+        int  i = 0;
+        byte ch;
 
-    // Печать строки из Program memory
-    int print_pgm(const char* m) {
+        if (pgm) {
+            while ((ch = pgm_read_byte(& m[i++]))) prn(ch);
+        } else {
+            while ((ch = m[i++])) prn(ch);
+        }
 
-        int i = 0;
-        char ch;
-        while ((ch = pgm_read_byte(& m[i++]))) prn(ch);
         return i;
     }
 
     // Печать числа от -32767 до 32767
-    void prnint(int x) {
+    void print(int x, int radix = 10) {
 
         int  id = 0;
         char t[6];
 
         if (x < 0) { prn('-'); x = -x; }
-        do { int a = x % 10; x = x / 10; t[id++] = '0' + a; } while (x);
+
+        do {
+
+            int a = x % radix;
+                x = x / radix;
+
+            t[id++] = (a < 10 ? '0' : '7') + a;
+
+        } while (x);
+
         while (--id >= 0) prn(t[id]);
-    }
-
-    void prnhex(int x) {
-
-        byte k;
-
-        k = (x >> 4) & 15;
-        prn(k < 10 ? '0' + k : '7' + k);
-        k = x & 15;
-        prn(k < 10 ? '0' + k : '7' + k);
     }
 
     // Рисовать фрейм
@@ -139,7 +138,6 @@ public:
         for (int j = x1; j <= x2; j++)
             put(j, i, ' ');
     }
-
 };
 
 #endif

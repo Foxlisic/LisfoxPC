@@ -26,6 +26,7 @@ extern const byte KbATnT[] PROGMEM;
  * 28 Win
  * 29 Scroll
  * 30 NumLock
+ * 31 GUI
  * */
 
 const byte KbATnT[] =
@@ -44,7 +45,7 @@ const byte KbATnT[] =
   ' ', ' ', ' ', ' ', ' ', 'Q', '!', ' ', ' ', ' ', 'Z', 'S', 'A', 'W', '@', ' ', // 9
   ' ', 'C', 'X', 'D', 'E', '$', '#', ' ', ' ', ' ', 'V', 'F', 'T', 'R', '%', ' ', // A
   ' ', 'N', 'B', 'H', 'G', 'Y', '^', ' ', ' ', ' ', 'M', 'J', 'U', '&', '*', ' ', // B
-  ' ', ',', 'K', 'I', 'O', ')', '(', ' ', ' ', '.', '?', '!', ':', 'P', '_', ' ', // C
+  ' ', ',', 'K', 'I', 'O', ')', '(', ' ', ' ', '.', '?', 'L', ':', 'P', '_', ' ', // C
   ' ', ' ', '"', ' ', '{', '+', ' ', ' ', ' ', ' ', ' ', '}', ' ', '|', ' ', ' ', // D
   ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '!', ' ', '$', '&', ' ', ' ', ' ', // E
   ')', '>', '@', '%', '^', '*', ' ', ' ', ' ', '+', '#', '_', '*', '(', ' ', ' ', // F
@@ -53,31 +54,56 @@ const byte KbATnT[] =
 class Keyboard {
 protected:
 
-    volatile byte release, st, ed, spec, shift;
+    volatile byte release, st, ed, spec, shift, alt, ctrl;
     volatile byte queue[16];
 
 public:
 
-    Keyboard() { release = st = ed = spec = shift = 0; }
+    Keyboard() { release = st = ed = spec = shift = alt = ctrl = 0; }
 
     // Разобрать клавишу AT&T -> очередь FIFO
     void recv() {
 
         byte in = inp(KEYB);
+        byte ot = 0;
 
         if      (in == 0xE0) spec    = 1; // Специальная клавиша
         else if (in == 0xF0) release = 1; // Признак отпущенной клавиши
         else {
 
-            // Нажатие на шифт
-            if (spec == 0 && (in == 0x12 || in == 0x59)) {
+            // Нажатие на...
+            if (spec == 0 && (in == 0x12 || in == 0x59)) { // SHIFT
                 shift = release ? 0 : 1;
-            }
-            // Нажатая клавиша обычного набора
-            else if (release == 0 && spec == 0) {
+            } else if (in == 0x11) { // ALT
+                alt = release ? 0 : 1;
+            } else if (in == 0x14) { // CTRL
+                ctrl = release ? 0 : 1;
+            } else if (release == 0) { // Нажатая клавиша
 
-                queue[ed] = pgm_read_byte(& KbATnT[in | (shift ? 0x80 : 0)]);
-                ed = (ed + 1) & 15;
+                ot = 0;
+                if (spec) {
+
+                    if      (in == 0x1F || in == 0x27) ot = 31; // GUI
+                    else if (in == 0x2F) ot = 28; // Win
+                    else if (in == 0x70) ot = 26; // Ins
+                    else if (in == 0x6C) ot = 5;  // Home
+                    else if (in == 0x69) ot = 6;  // End
+                    else if (in == 0x7D) ot = 23; // PgUp
+                    else if (in == 0x7A) ot = 24; // PgDn
+                    else if (in == 0x71) ot = 25; // Del
+                    else if (in == 0x75) ot = 1;  // Up
+                    else if (in == 0x74) ot = 2;  // Rt
+                    else if (in == 0x72) ot = 3;  // Dn
+                    else if (in == 0x6B) ot = 4;  // Lf
+
+                } else {
+                    ot = pgm_read_byte(& KbATnT[in | (shift ? 0x80 : 0)]);
+                }
+
+                if (ot) {
+                    queue[ed] = ot;
+                    ed = (ed + 1) & 15;
+                }
             }
 
             spec = release = 0;

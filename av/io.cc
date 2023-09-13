@@ -41,8 +41,8 @@ void AVR::put(uint16_t addr, uint8_t value) {
         case 0x22: eoi = 0; break;              // Разрешение прерывания
         case 0x2C: spi_cmd(value); break;       // SD-карта
         case 0x2D: spi_st &= ~2; break;         // Сброс таймаута
-        case 0x2E: cur_x = value; break;        // Курсор X
-        case 0x2F: cur_y = value; break;        // Курсор Y
+        case 0x2E: update_cur(value, cur_y);  break; // Курсор X
+        case 0x2F: update_cur(cur_x, value);  break; // Курсор Y
         case 0x30: intr_mask = value; break;    // Маски прерываний
         case 0x31: zxborder_update(value); break; // Бордер экрана ZX
     }
@@ -54,6 +54,19 @@ void AVR::put(uint16_t addr, uint8_t value) {
 
     // Запись во флаги
     if (A == 0x5F) byte_to_flag(value);
+}
+
+// Передвинуть курсор
+void AVR::update_cur(int x, int y) {
+
+    int lx = cur_x, ly = cur_y;
+    if (videomode == 0) {
+
+        cur_x = x;
+        cur_y = y;
+        update_vm_byte(0xF000 + 2*lx + 160*ly);
+        update_vm_byte(0xF000 + 2*cur_x + 160*cur_y);
+    }
 }
 
 // Запись в видеопамять

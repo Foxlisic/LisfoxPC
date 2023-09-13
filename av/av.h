@@ -153,6 +153,7 @@ public:
     void        update_vm_byte(int A);
     void        zxbyte_screen(int A);
     void        zxborder_update(int value);
+    void        update_cur(int x, int y);
 
     // Процессор
     void        assign();
